@@ -3,9 +3,15 @@ package com.github.aznamier.keycloak.event.provider;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jboss.logging.Logger;
+
 import org.keycloak.events.Event;
+import org.keycloak.events.EventType;
 import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.admin.AdminEvent;
+import org.keycloak.events.Details;
+import org.keycloak.models.UserModel;
+import org.keycloak.models.KeycloakSession;
 
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.AMQP.BasicProperties;
@@ -16,11 +22,14 @@ import com.rabbitmq.client.ConnectionFactory;
 
 public class RabbitMqEventListenerProvider implements EventListenerProvider {
 
+	private static Logger logger = Logger.getLogger(RabbitMqEventListenerProvider.class);
 	private RabbitMqConfig cfg;
 	private ConnectionFactory factory;
+	private KeycloakSession session;
 
-	public RabbitMqEventListenerProvider(RabbitMqConfig cfg) {
+	public RabbitMqEventListenerProvider(RabbitMqConfig cfg, KeycloakSession session) {
 		this.cfg = cfg;
+		this.session = session;
 		
 		this.factory = new ConnectionFactory();
 
@@ -38,6 +47,21 @@ public class RabbitMqEventListenerProvider implements EventListenerProvider {
 
 	@Override
 	public void onEvent(Event event) {
+		// we need to enrich event with more user information for certain event types
+		// see AccountRestService.java vs. AccountFormService.java
+		// https://github.com/keycloak/keycloak/pull/7495
+		if (event.getType().equals(EventType.UPDATE_PROFILE) || event.getType().equals(EventType.REGISTER)) {
+			logger.debugv("Enrich data at {0} event in RabbitMqEventListener", event.getType().name());
+			UserModel user = session.users().getUserById(event.getUserId(), session.getContext().getRealm());
+			if (event.getDetails() == null) {
+				event.setDetails(new HashMap<>());
+			}
+			event.getDetails().putIfAbsent(Details.USERNAME, user.getUsername());
+			event.getDetails().putIfAbsent("updated_email", user.getEmail());
+			event.getDetails().putIfAbsent("updated_first_name", user.getFirstName());
+			event.getDetails().putIfAbsent("updated_last_name", user.getLastName());;
+		}
+
 		EventClientNotificationMqMsg msg = EventClientNotificationMqMsg.create(event);
 		String routingKey = RabbitMqConfig.calculateRoutingKey(event);
 		String messageString = RabbitMqConfig.writeAsJson(msg, true);
