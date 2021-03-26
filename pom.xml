@@ -3,9 +3,9 @@
     <modelVersion>4.0.0</modelVersion>
     
     <groupId>com.github.aznamier.keycloak.event.provider</groupId>
-    <artifactId>keycloak-to-rabbit</artifactId>
+    <artifactId>keycloak-to-rabbit-tributech-mod</artifactId>
     <packaging>jar</packaging>
-	<version>1.0</version>
+	<version>1.1</version>
     
 
 
@@ -18,8 +18,8 @@
 	<distributionManagement>
 	   <repository>
 	     <id>github</id>
-	     <name>GitHub AZNAMIER Apache Maven Packages</name>
-	     <url>https://maven.pkg.github.com/aznamier/keycloak-event-listener-rabbitmq</url>
+	     <name>GitHub tributech-solutions Apache Maven Packages</name>
+	     <url>https://maven.pkg.github.com/tributech-solutions/keycloak-event-listener-rabbitmq</url>
 	   </repository>
 	</distributionManagement>
 	
@@ -68,7 +68,7 @@
     </dependencies>
 
     <build>
-        <finalName>keycloak-to-rabbit</finalName>
+        <finalName>keycloak-to-rabbit-tributech-mod</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
